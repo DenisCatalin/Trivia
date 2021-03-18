@@ -120,7 +120,7 @@ body {
     outline: none;
     padding: 5px;
     transition: .4s ease;
-    background: rgb(165, 168, 173);
+    background: rgb(218, 218, 218);
     font-family: 'Poppins', sans-serif;
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
     cursor: pointer;
