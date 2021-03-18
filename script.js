@@ -29,24 +29,24 @@ let newUrl = [];
 const loadingAnim = document.querySelector(".lds-spinner");
 const mainDiv = document.querySelector(".questions");
 const helper = document.querySelector(".helper");
+const introBtns = document.querySelector(".buttonIntro");
 const startBtn = document.querySelector(".start");
+const scoresBtn = document.querySelector(".scores");
+const infoBtn = document.querySelector(".infos");
 const continueBtn = document.querySelector(".continue");
+const mainTitle = document.querySelector(".main-title");
+const mainButtons = document.querySelector(".main-buttons");
 continueBtn.style.display = "none";
-let correct;
-let choices = [];
-let points = 0;
-let lives = 3;
-let random;
-let seconds = 100;
-let timer;
-let answerTimer;
-let categs = 0;
-let bonus = 0;
+let correct, choices = [], points = 0, lives = 3, random, answered = 0, seconds = 100, timer, answerTimer, categs = 0, bonus = 0;
 let choicesButton = [];
 
+mainDiv.style.display = "none";
 loadingAnim.style.display = "none";
 
 class UI {
+    static showIntro() {
+        
+    }
     static getQuestion(data) {
         data.results.map(result => {
             correct = result.correct_answer;
@@ -88,7 +88,12 @@ class UI {
         document.querySelector(".timer").style.width = "100%";
     }
     static selectCategs() {
-        startBtn.style.display = "none";
+        mainDiv.style.display = "initial";
+        mainTitle.style.display = "none";
+        // startBtn.style.display = "none";
+        // scoresBtn.style.display = "none";
+        // infoBtn.style.display = "none";
+        mainButtons.style.display = "none";
         mainDiv.innerHTML = `
         <div class="category">
             <div class="title">
@@ -125,6 +130,15 @@ class UI {
         </div>
         `;
     }
+    static showInformations() {
+
+        mainDiv.innerHTML = "";
+        mainDiv.innerHTML = `
+            <div class="informations-btn">
+                <h2>INFORMATIONS</h2>
+            </div>
+        `;
+    }
 }
 
 async function getData() {
@@ -144,41 +158,49 @@ async function getData() {
     const data = await dataFetch.json();
     mainDiv.innerHTML = "";
     UI.getQuestion(data);
+    answered = 0;
 }
 
-UI.selectCategs();
 
-const buttons = document.querySelectorAll(".categ");
-buttons.forEach((btn, index) => {
-    btn.addEventListener("click", (e) => {
-        e.target.classList.toggle("selected");
-        if(index === 24) {
-            for(let i = 0; i < 24; i++) {
-                if(buttons[i].classList.contains("selected")) buttons[i].classList.toggle("selected");
+
+startBtn.addEventListener("click", () => {
+    UI.selectCategs();
+    const buttons = document.querySelectorAll(".categ");
+    buttons.forEach((btn, index) => {
+        btn.addEventListener("click", (e) => {
+            e.target.classList.toggle("selected");
+            if(index === 24) {
+                for(let i = 0; i < 24; i++) {
+                    if(buttons[i].classList.contains("selected")) buttons[i].classList.toggle("selected");
+                }
+            } else {
+                if(buttons[24].classList.contains("selected")) buttons[24].classList.toggle("selected");   
             }
-        } else {
-            if(buttons[24].classList.contains("selected")) buttons[24].classList.toggle("selected");   
-        }
-        if(e.target.classList.contains("selected")) {
-            if(index != 24) {
-                categs++;
-                newUrl.push(url[index]);
-            } else categs = 24;
-        } else {
-            if(index != 24) {
-                categs--;
-                let newIndex = index;
-                newUrl.forEach((link, index) => {
-                    if(link === url[newIndex]) newUrl.splice(index, 1);
-                });
-            } else categs = 0;
-        }
-        if(categs > 0) continueBtn.style.display = "initial";
-        else continueBtn.style.display = "none";
-        document.querySelector(".title p").innerHTML = 
-        `
-            <p>Categories selected: ${categs}</p>
-        `;
+            if(e.target.classList.contains("selected")) {
+                if(index != 24) {
+                    categs++;
+                    newUrl.push(url[index]);
+                } else {
+                    categs = 24;
+                    continueBtn.style.display = "none";
+                    getData();
+                }    
+            } else {
+                if(index != 24) {
+                    categs--;
+                    let newIndex = index;
+                    newUrl.forEach((link, index) => {
+                        if(link === url[newIndex]) newUrl.splice(index, 1);
+                    });
+                } else categs = 0;
+            }
+            if(categs > 0) continueBtn.style.display = "initial";
+            else continueBtn.style.display = "none";
+            document.querySelector(".title p").innerHTML = 
+            `
+                <p>Categories selected: ${categs}</p>
+            `;
+        });
     });
 });
 
@@ -250,7 +272,16 @@ function checkAnswers(answer) {
         if(lives === 0) {
             clearInterval(timer);
             mainDiv.innerHTML = "";
-            mainDiv.innerHTML = `<h3>You Lost<br>You had ${points} points</h3>`;
+            mainDiv.innerHTML = `
+                <div class="lose">
+                    <h3>You Lost<br>You answered to ${points} questions.<br>Better luck next time!</h3>
+                    <button class="retry">Try again</button>
+                </div>
+            `;
+            const retrybtn = document.querySelector(".retry");
+            retrybtn.addEventListener("click", () => {
+                location.reload(true);
+            });
         } else setTimeout(() => {
             getData();
         }, 3000);
@@ -296,10 +327,22 @@ continueBtn.addEventListener("click", () => {
 });
 
 document.querySelector("body").addEventListener("click", (e) => {
-    if(e.target.classList.contains("choice1")) checkAnswers(choices [0]);
-    if(e.target.classList.contains("choice2")) checkAnswers(choices [1]);
-    if(e.target.classList.contains("choice3")) checkAnswers(choices [2]);
-    if(e.target.classList.contains("choice4")) checkAnswers(choices [3]);
+    if(e.target.classList.contains("choice1") && answered === 0) {
+        checkAnswers(choices [0]);
+        answered = 1;
+    }
+    if(e.target.classList.contains("choice2") && answered === 0) {
+        checkAnswers(choices [1]);
+        answered = 1;
+    }    
+    if(e.target.classList.contains("choice3") && answered === 0) {
+        checkAnswers(choices [2]);
+        answered = 1;
+    }    
+    if(e.target.classList.contains("choice4") && answered === 0) {
+        checkAnswers(choices [3]);
+        answered = 1;
+    }    
     if(e.target.classList.contains("helper")) {
         switch(random) {
             case 0: {
